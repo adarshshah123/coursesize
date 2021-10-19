@@ -220,11 +220,11 @@ foreach ($coursesizes as $courseid => $size) {
         $summary = html_writer::link($summarylink, get_string('coursesummary', 'report_coursesize'));
         $row[] = "<span id = \"coursesize_".$course->shortname."\" title = \"$bytesused\">"
         .number_format($filesize->filesize / 1000000, 2)."</span>";
-        $row[] = "<span title=\"$backupbytesused\">" . number_format($backupsize  / 100000, 2 ) . " MB</span>";
+        $row[] = "<span title=\"$backupbytesused\">" . number_format($backupsize  / 1000000, 2 ) . " MB</span>";
         $row[] = "<span id=\"coursesize_".$course->shortname."\" title=\"$bytesused\">$readablesize</span>".$summary;
         $coursetable->data[] = $row;
         $downloaddata[] = array($course->shortname, $course->name, str_replace(',', '', $readablesize),
-                                str_replace(',', '', number_format($backupsize  / 100000, 2 ) . "MB"));
+                                str_replace(',', '', number_format($backupsize  / 1000000, 2 ) . "MB"));
     }
     unset($courses[$courseid]);
 }

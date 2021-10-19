@@ -39,9 +39,7 @@ $sizesql = "SELECT DISTINCT a.contenthash, a.component, SUM(a.filesize) as files
                     WHERE ".$DB->sql_concat('ctx.path', "'/'")." LIKE ?
                        AND f.filename != '.') a
              GROUP BY a.component";
-
 $cxsizes = $DB->get_recordset_sql($sizesql, array($contextcheck));
-
 $coursetable = new html_table();
 $coursetable->align = array('right', 'right');
 $coursetable->head = array(get_string('plugin'),
@@ -57,20 +55,18 @@ $cxsizes->close();
 // Natural join between context table and files table.
 $subsql = "SELECT cx.path, f.contextid, cx.contextlevel,f.filearea, f.filesize, f.contenthash, f.filename
                 FROM {files} f, {context} cx
-                WHERE (cx.id = f.contextid AND f.filename!=  ' . ')
-                AND f.filearea!='draft' GROUP BY cx.id";
+                WHERE (cx.id = f.contextid AND f.filename!=  '.')
+                AND f.filearea != 'draft' GROUP BY cx.id";
 
 // Self join of subsql table on context_id and retrieving info from the table.
 $sql = "SELECT t1.contenthash,t1.contextlevel, t1.path, t1.filesize, t1.filename as filename, t1.contextid
         FROM ($subsql) as t1,
         ($subsql) as t2 WHERE (t1.contenthash=t2.contenthash AND t1.contextid!=t2.contextid) AND
-        t1.path LIKE '$context->path%' GROUP BY t1.contextid";
-// Calculating total size of shared files.
-$totalsharedfilessize = "SELECT SUM(t.filesize) as filesize FROM ($sql) as t";
-$totalsharedfilessize = $DB->get_records_sql($totalsharedfilessize);
+        ".$DB->sql_concat('t1.path', "'/'")." LIKE ? GROUP BY t1.contextid";
 
 // Listing all shared file.
-$sharedfilessize = $DB->get_records_sql($sql);
+$sharedfilessize = $DB->get_recordset_sql($sql, array($contextcheck));
+
 $sharedfiletable = new html_table();
 $sharedfiletable->align = array('right', 'right');
 $sharedfiletable->head = array(get_string('sharedfilesname', 'report_coursesize'),
@@ -82,8 +78,13 @@ foreach ($sharedfilessize as $sharedfile) {
     $row[] = number_format($sharedfile->filesize / 1000000, 2) . "MB";
     $sharedfiletable->data[] = $row;
 }
+
+// Calculating total size of shared files.
+$totalsharedfilessize = "SELECT SUM(t.filesize) as filesize FROM ($sql) as t";
+$totalsharedfilessize = $DB->get_records_sql($totalsharedfilessize, array($contextcheck));
+
 // Creating table for total shared file size.
-foreach ($totalsharedfilessize as $sharedfile) {    
+foreach ($totalsharedfilessize as $sharedfile) {
     $sharedfiletable->data[] = array();// Add empty row before total.
     $row = array();
     $row[] = get_string('total_shared_files_size', 'report_coursesize');

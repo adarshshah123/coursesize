@@ -191,6 +191,7 @@ foreach ($coursesizes as $courseid => $size) {
     $totalbackupsize  = $totalbackupsize + $backupsize;
     $course = $courses[$courseid];
     $context = context_course::instance($courseid);
+    $contextcheck = $context->path . '/%';
     // Natural join between context table and files ttable.
     $subsql = "SELECT cx.path, f.contextid, cx.contextlevel,f.filearea, f.filesize, f.contenthash,
     f.filename FROM {files} f , mdl_context as cx WHERE (cx.id = f.contextid AND
@@ -200,11 +201,11 @@ foreach ($coursesizes as $courseid => $size) {
     $sql = "SELECT t1.contenthash,t1.contextlevel, t1.path, t1.filesize, t1.filename as filename,
     t1.contextid from ($subsql) as t1,
     ($subsql) as t2 where (t1.contenthash=t2.contenthash and t1.contextid != t2.contextid)
-    and t1.path like '$context->path%' group BY t1.contextid";
+    and  ".$DB->sql_concat('t1.path', "'/'")." LIKE ? group BY t1.contextid";
 
     // Calculating total size of shared files.
     $totalsharedfilessize = "SELECT SUM(t.filesize) as filesize FROM ($sql) as t";
-    $totalsharedfilessize = $DB->get_records_sql($totalsharedfilessize);
+    $totalsharedfilessize = $DB->get_records_sql($totalsharedfilessize, array($contextcheck));
     foreach ($totalsharedfilessize as $filesize) {
         $row = array();
         $row[] = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'">' . $course->shortname . '</a>';
@@ -220,11 +221,11 @@ foreach ($coursesizes as $courseid => $size) {
         $summary = html_writer::link($summarylink, get_string('coursesummary', 'report_coursesize'));
         $row[] = "<span id = \"coursesize_".$course->shortname."\" title = \"$bytesused\">"
         .number_format($filesize->filesize / 1000000, 2)."</span>";
-        $row[] = "<span title=\"$backupbytesused\">" . number_format($backupsize  / 1000000, 2 ) . " MB</span>";
+        $row[] = "<span title=\"$backupbytesused\">".number_format($backupsize / 1000000, 2 ) . " MB</span>";
         $row[] = "<span id=\"coursesize_".$course->shortname."\" title=\"$bytesused\">$readablesize</span>".$summary;
         $coursetable->data[] = $row;
         $downloaddata[] = array($course->shortname, $course->name, str_replace(',', '', $readablesize),
-                                str_replace(',', '', number_format($backupsize  / 1000000, 2 ) . "MB"));
+                                str_replace(',', '', number_format($backupsize / 1000000, 2 ) . "MB"));
     }
     unset($courses[$courseid]);
 }

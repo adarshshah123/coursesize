@@ -17,8 +17,8 @@ Imporvements in plugin
 * Now the user will able to know that amount of disk(total shared files size shared with other courses) will not free if
   they delete the course or files with in the course.
 * Now the user will able to know that amount of disk(total coursedata shared throughout the site).
-* For small size files it will count size as zero. 
+* For small size files it will count size as zero because on converting from Bytes to MB we are considering it two
+  decimal points. 
   
-
 It should be possible to improve the report to address these issues - we'd greatly appreciate any patches to improve the plugin!
  

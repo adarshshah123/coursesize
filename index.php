@@ -253,10 +253,9 @@ $totalsharedsql = "SELECT SUM(t.filesize)as filesize FROM
     ($subsql) as t2 where (t1.contenthash=t2.contenthash and t1.contextid != t2.contextid)
     GROUP by t1.contenthash)t";
 $totalsharedsql = $DB->get_records_sql($totalsharedsql);
-
 // Accessing total shared file size for all courses.
 foreach ($totalsharedsql as $totalsharedsize) {
-    $totalsharedsize = number_format($totalsharedsize->filesize / 1000000, 2) ."MB";
+    $totalsharedsize = $totalsharedsize->filesize;
 }
 
 // Now add the totals to the bottom of the table.
@@ -265,7 +264,7 @@ $downloaddata[] = array();
 $row = array();
 $row[] = get_string('total');
 $row[] = '';
-$row[] = number_format($totalsharedsize / 1000000, 2) . "MB";
+$row[] = number_format($totalsharedsize / 1000000, 2). "MB";
 $row[] = number_format($totalbackupsize / 1000000, 2) . "MB";
 $row[] = number_format($totalsize / 1000000, 2) . "MB";
 $coursetable->data[] = $row;
@@ -326,7 +325,7 @@ if (empty($coursecat)) {
     print get_string("sizerecorded", "report_coursesize", $totaldate) . "<br/><br/>\n";
     print get_string('catsystemuse', 'report_coursesize', $systemsizereadable) . "<br/>";
     print get_string('catsystembackupuse', 'report_coursesize', $systembackupreadable) . "<br/>";
-    print  get_string("totalcoursedata", 'report_coursesize', $totalsharedsize) .' <br>';
+    print  get_string("totalcoursedata", 'report_coursesize', number_format($totalsharedsize / 1000000, 2)) .'MB <br>';
     if (!empty($CFG->filessizelimit)) {
         print get_string("sizepermitted", 'report_coursesize', number_format($CFG->filessizelimit)) . "<br/>\n";
     }

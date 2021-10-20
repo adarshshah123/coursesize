@@ -203,7 +203,7 @@ foreach ($coursesizes as $courseid => $size) {
     ($subsql) as t2 where (t1.contenthash=t2.contenthash and t1.contextid != t2.contextid)
     and  ".$DB->sql_concat('t1.path', "'/'")." LIKE ? group BY t1.contextid";
 
-    // Calculating total size of shared files.
+    // Calculating total size of shared files for a single course.
     $totalsharedfilessize = "SELECT SUM(t.filesize) as filesize FROM ($sql) as t";
     $totalsharedfilessize = $DB->get_records_sql($totalsharedfilessize, array($contextcheck));
     foreach ($totalsharedfilessize as $filesize) {
@@ -229,6 +229,7 @@ foreach ($coursesizes as $courseid => $size) {
     }
     unset($courses[$courseid]);
 }
+
 // Now add the courses that had no sitedata into the table.
 if (REPORT_COURSESIZE_SHOWEMPTYCOURSES) {
     $a = new stdClass;
@@ -245,13 +246,26 @@ if (REPORT_COURSESIZE_SHOWEMPTYCOURSES) {
         $coursetable->data[] = $row;
     }
 }
+// Calculating total size of shared files for a all courses.
+$totalsharedsql = "SELECT SUM(t.filesize)as filesize FROM
+(SELECT t1.contenthash,t1.contextlevel, t1.path, t1.filesize, t1.filename as filename,
+    t1.contextid from ($subsql) as t1,
+    ($subsql) as t2 where (t1.contenthash=t2.contenthash and t1.contextid != t2.contextid)
+    GROUP by t1.contenthash)t";
+$totalsharedsql = $DB->get_records_sql($totalsharedsql);
+
+// Accessing total shared file size for all courses.
+foreach ($totalsharedsql as $totalsharedsize) {
+    $totalsharedsize = number_format($totalsharedsize->filesize / 1000000, 2) ."MB";
+}
+
 // Now add the totals to the bottom of the table.
 $coursetable->data[] = array(); // Add empty row before total.
 $downloaddata[] = array();
 $row = array();
 $row[] = get_string('total');
 $row[] = '';
-$row[] = '';
+$row[] = number_format($totalsharedsize / 1000000, 2) . "MB";
 $row[] = number_format($totalbackupsize / 1000000, 2) . "MB";
 $row[] = number_format($totalsize / 1000000, 2) . "MB";
 $coursetable->data[] = $row;
@@ -312,6 +326,7 @@ if (empty($coursecat)) {
     print get_string("sizerecorded", "report_coursesize", $totaldate) . "<br/><br/>\n";
     print get_string('catsystemuse', 'report_coursesize', $systemsizereadable) . "<br/>";
     print get_string('catsystembackupuse', 'report_coursesize', $systembackupreadable) . "<br/>";
+    print  get_string("totalcoursedata", 'report_coursesize', $totalsharedsize) .' <br>';
     if (!empty($CFG->filessizelimit)) {
         print get_string("sizepermitted", 'report_coursesize', number_format($CFG->filessizelimit)) . "<br/>\n";
     }

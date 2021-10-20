@@ -50,3 +50,4 @@ $string['sharedfilesize'] = 'Total Size';
 $string['sharedsize'] = 'Shared Size';
 $string['total_shared_files_size'] = 'Total shared size';
 $string['total_course_size'] = 'Total course size';
+$string['totalcoursedata'] = 'Total coursedata shared throughout the site: {$a}';

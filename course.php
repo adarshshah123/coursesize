@@ -66,7 +66,6 @@ $sql = "SELECT t1.contenthash,t1.contextlevel, t1.path, t1.filesize, t1.filename
 
 // Listing all shared file.
 $sharedfilessize = $DB->get_recordset_sql($sql, array($contextcheck));
-
 $sharedfiletable = new html_table();
 $sharedfiletable->align = array('right', 'right');
 $sharedfiletable->head = array(get_string('sharedfilesname', 'report_coursesize'),

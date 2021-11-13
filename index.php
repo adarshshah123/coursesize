@@ -229,7 +229,7 @@ foreach ($coursesizes as $courseid => $size) {
     }
     $backupsize = $coursebackupsizes[$courseid];
     $backupsize=round(ceil($backupsize /1048576));
-    $totalsize = $totalsize + round($size /1048576);
+    $totalsize = $totalsize + round(ceil($size /1048576));
     $totalbackupsize  = $totalbackupsize + $backupsize;
     $course = $courses[$courseid];
     $coursecontext = context_course::instance($course->id);
@@ -339,7 +339,7 @@ $downloaddata[] = array();
 $row = array();
 $row[] = get_string('total');
 $row[] = '';
-$row[] =round(ceil($totalshared)) . $sizemb;
+$row[] =$totalshared . $sizemb;
 $row[] = '';
 $row[] = $totalbackupsize  . $sizemb;
 $row[] = $totalsize  . $sizemb;

@@ -21,6 +21,7 @@
  * @copyright  2017 Catalyst IT {@link http://www.catalyst.net.nz}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 require_once('../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 
@@ -31,9 +32,10 @@ admin_externalpage_setup('reportcoursesize');
 $course = $DB->get_record('course', array('id' => $courseid));
 
 $context = context_course::instance($course->id);
-$contextcheck = $context->path . '/%';
-$sizesql = "SELECT DISTINCT a.contenthash, a.component, SUM(a.filesize) as filesize
-              FROM (SELECT  f.contenthash, f.component, f.filesize
+//$contextcheck = $context->path . '/%';
+$contextcheck = $context->path . '%';
+$sizesql = "SELECT a.component, SUM(a.filesize) as filesize
+              FROM (SELECT DISTINCT f.contenthash, f.component, f.filesize
                     FROM {files} f
                     JOIN {context} ctx ON f.contextid = ctx.id
                     WHERE ".$DB->sql_concat('ctx.path', "'/'")." LIKE ?
@@ -45,27 +47,62 @@ $coursetable->align = array('right', 'right');
 $coursetable->head = array(get_string('plugin'),
     get_string('size'));
 $coursetable->data = array();
+$sizemb = ' ' . get_string('sizemb');
 foreach ($cxsizes as $cxdata) {
     $row = array();
     $row[] = $cxdata->component;
-    $row[] = number_format($cxdata->filesize / 1000000, 2) . "MB";
+    $row[] = round(ceil($cxdata->filesize / 1048576)) . $sizemb;
+
     $coursetable->data[] = $row;
 }
 $cxsizes->close();
-// Natural join between context table and files table.
-$subsql = "SELECT cx.path, f.contextid, cx.contextlevel,f.filearea, f.filesize, f.contenthash, f.filename
-                FROM {files} f, {context} cx
-                WHERE (cx.id = f.contextid AND f.filename!=  '.')
-                AND f.filearea != 'draft' GROUP BY cx.id";
-
-// Self join of subsql table on context_id and retrieving info from the table.
-$sql = "SELECT t1.contenthash,t1.contextlevel, t1.path, t1.filesize, t1.filename as filename, t1.contextid
-        FROM ($subsql) as t1,
-        ($subsql) as t2 WHERE (t1.contenthash=t2.contenthash AND t1.contextid!=t2.contextid) AND
-        ".$DB->sql_concat('t1.path', "'/'")." LIKE ? GROUP BY t1.contextid";
-
-// Listing all shared file.
-$sharedfilessize = $DB->get_recordset_sql($sql, array($contextcheck));
+// Listing file name with size which are shared with other courses
+$sizesql ="SELECT  table1.contenthash, table1.path, table1.filename, table1.filesize
+FROM
+(
+    SELECT  t.contenthash, t.filename,
+     t.filesize,   t.component, t.id, t.path
+    FROM
+    (
+        SELECT cx.id, cx.contextlevel, cx.instanceid,
+                 TRIM(CONCAT('/', cx.id) FROM cx.path) as path,
+               cx.depth, size.filesize, size.contenthash,
+               size.filename, size.component
+        FROM mdl_context as cx
+            INNER JOIN
+            (
+                SELECT f.contextid, f.contenthash, f.filename,
+                f.filesize, f.component
+                FROM mdl_files f where f.filename<>'.'
+                GROUP BY f.contextid
+            ) size ON cx.id = size.contextid
+    ) as t 
+) as table1 ,
+(
+    SELECT t.contenthash, t.filename, t.filesize,
+                    t.component, t.id, t.path
+    FROM
+    (
+        SELECT cx.id, cx.contextlevel, cx.instanceid,
+               TRIM(CONCAT('/', cx.id) FROM cx.path) as path, 
+               cx.depth, size.filesize, size.contenthash,
+               size.filename, size.component
+        FROM mdl_context as cx
+            INNER JOIN
+            (
+                SELECT f.contextid, f.contenthash, f.filename,
+                f.filesize, f.component
+                FROM mdl_files f where f.filename<>'.'
+                GROUP BY f.contextid
+            ) size ON cx.id = size.contextid
+    ) as t 
+) as table2
+WHERE table1.contenthash = table2.contenthash
+      and table1.path <> table2.path
+      and table1.path like ?
+group by table1.contenthash
+";
+$sharedfilessize = $DB->get_recordset_sql($sizesql, array($contextcheck));
 $sharedfiletable = new html_table();
 $sharedfiletable->align = array('right', 'right');
 $sharedfiletable->head = array(get_string('sharedfilesname', 'report_coursesize'),
@@ -74,56 +111,92 @@ $sharedfiletable->data = array();
 foreach ($sharedfilessize as $sharedfile) {
     $row = array();
     $row[] = $sharedfile->filename;
-    $row[] = number_format($sharedfile->filesize / 1000000, 2) . "MB";
-    $sharedfiletable->data[] = $row;
-}
-
-// Calculating total size of shared files.
-$totalsharedfilessize = "SELECT SUM(t.filesize) as filesize FROM ($sql) as t";
-$totalsharedfilessize = $DB->get_records_sql($totalsharedfilessize, array($contextcheck));
-
-// Creating table for total shared file size.
-foreach ($totalsharedfilessize as $sharedfile) {
-    $sharedfiletable->data[] = array();// Add empty row before total.
-    $row = array();
-    $row[] = get_string('total_shared_files_size', 'report_coursesize');
-    $row[] = number_format($sharedfile->filesize / 1000000, 2) . "MB";
+    $row[] = round(ceil($sharedfile->filesize /  1048576)) . "MB";
     $sharedfiletable->data[] = $row;
 }
 // Calculate filesize shared with other courses.
-$sizesql = "SELECT SUM(filesize) FROM (SELECT DISTINCT a.contenthash, a.component, SUM(a.filesize) as filesize
-            FROM (SELECT  f.contenthash, f.component, f.filesize
-                FROM {files} f
-                JOIN {context} ctx ON f.contextid = ctx.id
-                WHERE ".$DB->sql_concat('ctx.path', "'/'")." LIKE ?
-                    AND f.filename != '.') a
-            GROUP BY a.component) b";
-$size = $DB->get_field_sql($sizesql, array($contextcheck, $contextcheck));
+/* $sizesql = "SELECT SUM(filesize) FROM (SELECT DISTINCT contenthash, filesize
+            FROM {files} f
+            JOIN {context} ctx ON f.contextid = ctx.id
+            WHERE ".$DB->sql_concat('ctx.path', "'/'")." NOT LIKE ?
+                AND f.contenthash IN (SELECT DISTINCT f.contenthash
+                                      FROM {files} f
+                                      JOIN {context} ctx ON f.contextid = ctx.id
+                                     WHERE ".$DB->sql_concat('ctx.path', "'/'")." LIKE ?
+                                       AND f.filename != '.')) b"; */
+
+$sizesql="SELECT SUM(final.filesize)
+FROM
+(
+    SELECT table1.contenthash, table1.path,
+    table1.filename, table1.filesize
+    FROM
+    ( 
+        SELECT distinct t.contenthash, t.filename, t.filesize, 
+        t.component, t.id, t.path
+        FROM
+        (
+            SELECT cx.id, cx.contextlevel, cx.instanceid, 
+            TRIM(CONCAT('/', cx.id) FROM cx.path) as path, 
+            cx.depth, size.filesize, size.contenthash,
+            size.filename, size.component
+            FROM mdl_context as cx
+                INNER JOIN
+                (
+                    SELECT f.contextid, f.contenthash, 
+                    f.filename, f.filesize, f.component
+                    FROM mdl_files f
+                    GROUP BY f.contextid
+                ) size ON cx.id = size.contextid
+        ) as t
+    ) as table1,
+    (
+        SELECT distinct
+            t.contenthash, t.filename, t.filesize, t.component, t.id, t.path
+        FROM
+        (
+            SELECT cx.id, cx.contextlevel, cx.instanceid, 
+                   TRIM(CONCAT('/', cx.id) FROM cx.path) as path, 
+                   cx.depth, size.filesize, size.contenthash,
+                   size.filename, size.component
+            FROM mdl_context as cx
+                INNER JOIN
+                (
+                    SELECT f.contextid, f.contenthash,
+    f.filename, f.filesize, f.component
+                    FROM mdl_files f
+                    GROUP BY f.contextid
+                ) size ON cx.id = size.contextid
+        ) as t
+    ) as table2
+    WHERE table1.contenthash = table2.contenthash
+          and table1.path <> table2.path
+          and table1.path like '$contextcheck'
+    group by table1.contenthash
+) final";
+
+$size = $DB->get_field_sql($sizesql);
 if (!empty($size)) {
-    $size = number_format($size / 1000000, 2) . "MB";
+    $size = round(ceil($size / 1048576)) . $sizemb;
 }
-// Now add the totals to the bottom of the shared file table .
-$coursetable->data[] = array(); // Add empty row before total.
+// Now add the total shared size to the bottom of the table.
+$sharedfiletable->data[] = array(); // Add empty row before total.
 $row = array();
-$row[] = get_string('total_course_size', 'report_coursesize');
-$row[] = $size;
-$coursetable->data[] = $row;
-
+$row[] = get_string('total');
+$row[] = round(ceil($size)) . $sizemb;
+$sharedfiletable->data[] = $row;
 // All the processing done, the rest is just output stuff.
-print $OUTPUT->header();
 
+print $OUTPUT->header();
 print $OUTPUT->heading(get_string('coursesize', 'report_coursesize'). " - ". format_string($course->fullname));
 print $OUTPUT->box(get_string('coursereport', 'report_coursesize'));
-
-print html_writer::table($coursetable);
-$filesize = "0";
-if (!empty($sharedfile->filesize)) {
-    print $OUTPUT->box(get_string('sharedusagecourse', 'report_coursesize', number_format($sharedfile->filesize / 1000000, 2)));
-} else {
-    print $OUTPUT->box(get_string('sharedusagecourse', 'report_coursesize', $filesize));
+if (!empty($size)) {
+    print $OUTPUT->box(get_string('sharedusagecourse', 'report_coursesize', $size));
+    print $OUTPUT->box(get_string('recover', 'report_coursesize', $size));
 }
+print html_writer::table($coursetable);
 if (!empty($sharedfile->filesize)) {
-    echo '  <h2>Shared files size</h2>';
+    echo '  <h2>Files list shared with other courses</h2>';
     print html_writer::table($sharedfiletable);
 }
 print $OUTPUT->footer();

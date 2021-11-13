@@ -48,4 +48,4 @@ $string['exportcsv'] = 'Export CSV';
 $string['sharedfilesname'] = 'File Name';
 $string['shared'] = 'Shared space';
 $string['recoverablesize'] = 'Recoverable size';
-$string['recover'] = '<p> Approx <b>{$a}</b> disk space on deleting course you will recover </p>';
+$string['recover'] = '<p>Approx <b>{$a}</b> disk space will not recover on deleting this course.</p>';

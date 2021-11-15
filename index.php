@@ -373,7 +373,8 @@ $systembackupreadable = round(ceil($systembackupsize / 1048576)) . $sizemb;
 
 // Add in Course Cat including dropdown to filter.
 
-/* $url = '';
+ $url = '';
+/*
 $catlookup = $DB->get_records_sql('select id,name from {course_categories}');
 $options = array('0' => 'All Courses' );
 foreach ($catlookup as $cat) {

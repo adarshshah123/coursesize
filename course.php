@@ -195,8 +195,16 @@ if (!empty($size)) {
     print $OUTPUT->box(get_string('recover', 'report_coursesize', $size));
 }
 print html_writer::table($coursetable);
-if (!empty($sharedfile->filesize)) {
-    echo '  <h2>Files list shared with other courses</h2>';
-    print html_writer::table($sharedfiletable);
+// Displaying shared file list table when debug mode is on.
+
+$debugdisplay = get_config('core','debugdisplay');
+$debugstringids = get_config('core','debugstringids');
+$debugvalidators = get_config('core','debugvalidators');
+$debuginfo = get_config('core','debuginfo');
+if($debugdisplay==1 || $debugstringids==1 || $debugvalidators==1 || $debuginfo==1) {
+    if (!empty($sharedfile->filesize)) {
+        echo '  <h2>Files list shared with other courses</h2>';
+        print html_writer::table($sharedfiletable);
+    }
 }
 print $OUTPUT->footer();

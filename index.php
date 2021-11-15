@@ -373,13 +373,13 @@ $systembackupreadable = round(ceil($systembackupsize / 1048576)) . $sizemb;
 
 // Add in Course Cat including dropdown to filter.
 
-$url = '';
+/* $url = '';
 $catlookup = $DB->get_records_sql('select id,name from {course_categories}');
 $options = array('0' => 'All Courses' );
 foreach ($catlookup as $cat) {
     $options[$cat->id] = format_string($cat->name, true, context_system::instance());
-}
-
+} */
+$options = core_course_category::make_categories_list('moodle/course:changecategory');
 // Add in download option. Exports CSV.
 
 if ($download == 1) {

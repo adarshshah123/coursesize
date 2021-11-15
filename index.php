@@ -380,6 +380,7 @@ foreach ($catlookup as $cat) {
     $options[$cat->id] = format_string($cat->name, true, context_system::instance());
 } */
 $options = core_course_category::make_categories_list('moodle/course:changecategory');
+array_unshift($options,'All Courses' );
 // Add in download option. Exports CSV.
 
 if ($download == 1) {

@@ -132,7 +132,7 @@ FROM
     table1.filename, table1.filesize
     FROM
     ( 
-        SELECT distinct t.contenthash, t.filename, t.filesize, 
+        SELECT  t.contenthash, t.filename, t.filesize, 
         t.component, t.id, t.path
         FROM
         (
@@ -151,7 +151,7 @@ FROM
         ) as t
     ) as table1,
     (
-        SELECT distinct
+        SELECT 
             t.contenthash, t.filename, t.filesize, t.component, t.id, t.path
         FROM
         (

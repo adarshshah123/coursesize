@@ -220,8 +220,10 @@ $totalbackupsize = 0;
 $downloaddata = array();
 $downloaddata[] = array(get_string('course'),
                            get_string('category'),
-                           get_string('diskusage', 'report_coursesize'),
-                           get_string('backupsize', 'report_coursesize'));
+                           get_string('shared', 'report_coursesize'),
+                           get_string('recoverablesize', 'report_coursesize'),
+                           get_string('backupsize', 'report_coursesize'),
+                           get_string('diskusage', 'report_coursesize'));
 $totalshared=0;
 foreach ($coursesizes as $courseid => $size) {
     if (empty($courses[$courseid])) {
@@ -312,8 +314,8 @@ $sharedsize = $DB->get_field_sql($sizesql);
    
     $row[] = "<span id=\"coursesize_".$course->shortname."\" title=\"$bytesused\">$readablesize</span>".$summary;
     $coursetable->data[] = $row;
-    $downloaddata[] = array($course->shortname, $course->name, str_replace(',', '', $readablesize),
-                            str_replace(',', '', round(ceil($backupsize /1048576)) . "$sizemb"));
+    $downloaddata[] = array($course->shortname, $course->name, str_replace(',', '', $sharedsize),str_replace(',', '', $recoverablesize),
+                            str_replace(',', '', round(ceil($backupsize /1048576)) . "$sizemb"),str_replace(',', '', $readablesize));
     unset($courses[$courseid]);
 }
 // Now add the courses that had no sitedata into the table.
@@ -344,8 +346,8 @@ $row[] = '';
 $row[] = $totalbackupsize  . $sizemb;
 $row[] = $totalsize  . $sizemb;
 $coursetable->data[] = $row;
-$downloaddata[] = array(get_string('total'), '', str_replace(',', '', round(ceil($totalsize / 1048576))) .
-                        $sizemb, str_replace(',', '', round(ceil($totalbackupsize / 1048576)) . $sizemb));
+$downloaddata[] = array(get_string('total'), '', str_replace(',', '', $totalshared) .$sizemb,
+'', str_replace(',', '', $totalbackupsize . $sizemb), str_replace(',', '', $totalsize) . $sizemb);
 unset($courses);
 if (!empty($usersizes)) {
     arsort($usersizes);

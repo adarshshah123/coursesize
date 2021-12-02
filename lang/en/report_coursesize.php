@@ -39,8 +39,8 @@ $string['sitefilesusage'] = 'File usage report';
 $string['totalsitedata'] = 'Total sitedata usage: {$a}';
 $string['userstopnum'] = 'Users (top {$a})';
 $string['emptycourseshidden'] = 'Courses that do not use any file storage have been excluded from this report.';
-$string['coursesize_desc'] = '<p>This report only provides approximate values, if a file is used 
-multiple times within a course or in multiple courses the report counts 
+$string['coursesize_desc'] = '<p>This report only provides approximate values, if a file is used
+multiple times within a course or in multiple courses the report counts
 one instance because Moodle only stores one physical version on disk. On deleting any course you will recover
 <b>Recoverable size</b> from disk space.</p>';
 $string['sharedusage'] = 'Shared Usage';

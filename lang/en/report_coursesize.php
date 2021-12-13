@@ -52,3 +52,5 @@ $string['sharedfilesname'] = 'File Name';
 $string['shared'] = 'Shared space';
 $string['recoverablesize'] = 'Recoverable size';
 $string['recover'] = '<p>Approx <b>{$a}</b> disk space will not recover on deleting this course.</p>';
+$string['courseoverview'] = '<h3>Course Size Overview</h3>';
+$string['course_report_pluginwise'] = '<h3>Course size on the basis of plugin type </h3>';

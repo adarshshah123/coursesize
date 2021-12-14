@@ -45,12 +45,12 @@ one instance because Moodle only stores one physical version on disk. On deletin
 <b>Recoverable size</b> from disk space.</p>';
 $string['sharedusage'] = 'Shared Usage';
 $string['coursesummary'] = '(view stats)';
-$string['sharedusagecourse'] = 'Approx {$a} is shared with other courses.';
+$string['sharedusagecourse'] = 'Approx {$a} MB is shared with other courses.';
 $string['privacy:metadata'] = 'The Course size plugin does not store any personal data.';
 $string['exportcsv'] = 'Export CSV';
 $string['sharedfilesname'] = 'File Name';
 $string['shared'] = 'Shared space';
 $string['recoverablesize'] = 'Recoverable size';
-$string['recover'] = '<p>Approx <b>{$a}</b> disk space will not recover on deleting this course.</p>';
+$string['recover'] = '<p>Approx <b>{$a} MB</b> disk space will not recover on deleting this course.</p>';
 $string['courseoverview'] = '<h3>Course Size Overview</h3>';
 $string['course_report_pluginwise'] = '<h3>Course size on the basis of plugin type </h3>';

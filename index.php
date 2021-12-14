@@ -182,7 +182,7 @@ $sql = "SELECT c.id, c.shortname, c.category, ca.name FROM {course} c "
        ."JOIN {course_categories} ca on c.category = ca.id".$extracoursesql;
 $courses = $DB->get_records_sql($sql, $courseparams);
 $coursetable = new html_table();
-$coursetable->align = array('right', 'right', 'left');
+$coursetable->align = array('center', 'center', 'center', 'center');
 $coursetable->head = array(get_string('course'),
                            get_string('category'),
                            get_string('backupsize', 'report_coursesize'),

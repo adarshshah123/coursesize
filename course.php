@@ -165,7 +165,7 @@ $coursesize = $DB->get_record_sql($coursesizesql, array($contextcheck));
 $readablesize = ceil($coursesize->size / 1048576) + $backup;
 $recoverablesize = $readablesize - $size;
 $coursesizetable = new html_table();
-$coursesizetable->align = array('center', 'center');
+$coursesizetable->align = array('center', 'center', 'center', 'center');
 $coursesizetable->head = array( get_string('shared', 'report_coursesize'),
                                 get_string('recoverablesize', 'report_coursesize'),
                                 get_string('backupsize', 'report_coursesize'),
@@ -243,7 +243,7 @@ if ($debugdisplay == 1 || $debugstringids == 1 || $debugvalidators == 1 || $debu
     foreach ($sharedfilessize as $sharedfile) {
         $row = array();
         $row[] = $sharedfile->filename;
-        $row[] = ceil($sharedfile->filesize / 1048576) . "MB";
+        $row[] = ceil($sharedfile->filesize / 1048576) . $sizemb;
         $sharedfiletable->data[] = $row;
     }
     // Now add the total shared size to the bottom of the table.

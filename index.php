@@ -69,7 +69,7 @@ if (!empty($reportconfig->filessize) && !empty($reportconfig->filessizeupdated)
 }
 
 $sizemb = ' ' . get_string('sizemb');
-$totalusagereadable = round(ceil($totalusage / 1048576)) . $sizemb;
+$totalusagereadable = ceil($totalusage / 1048576) . $sizemb;
 
 // TODO: display the sizes of directories (other than filedir) in dataroot
 // eg old 1.9 course dirs, temp, sessions etc.
@@ -185,8 +185,6 @@ $coursetable = new html_table();
 $coursetable->align = array('right', 'right', 'left');
 $coursetable->head = array(get_string('course'),
                            get_string('category'),
-                         // get_string('shared', 'report_coursesize'),
-                         //  get_string('recoverablesize', 'report_coursesize'),
                            get_string('backupsize', 'report_coursesize'),
                            get_string('diskusage', 'report_coursesize'));
 $coursetable->data = array();
@@ -196,68 +194,25 @@ $totalbackupsize = 0;
 $downloaddata = array();
 $downloaddata[] = array(get_string('course'),
                            get_string('category'),
-                           get_string('shared', 'report_coursesize'),
-                           get_string('recoverablesize', 'report_coursesize'),
                            get_string('backupsize', 'report_coursesize'),
                            get_string('diskusage', 'report_coursesize'));
-/* $sizesubsql = '
-(
-    SELECT  t.contenthash, t.filename, t.filesize,
-    t.component, t.id, t.path, t.contextlevel
-    FROM
-        (
-            SELECT cx.id, cx.contextlevel, cx.instanceid,
-            TRIM(CONCAT("/", cx.id) FROM cx.path) as path,
-            cx.depth, size.filesize, size.contenthash,
-            size.filename, size.component
-            FROM {context} cx
-                INNER JOIN
-                (
-                    SELECT f.contextid, f.contenthash,
-                    f.filename, f.filesize, f.component
-                    FROM {files} f
-                    GROUP BY f.contextid
-                ) size ON cx.id = size.contextid
-        ) as t
-)';
-
-$sizesql = "SELECT SUM(final.filesize)
-FROM
-    (
-        SELECT table1.contenthash, table1.path,
-        table1.filename, table1.filesize, table1.contextlevel
-        FROM $sizesubsql as table1, $sizesubsql as table2
-        WHERE table1.contenthash = table2.contenthash and table1.contextlevel = table2.contextlevel
-            and table1.path <> table2.path
-            and table1.path like ?
-        group by table1.contenthash
-    ) final"; */
-$totalshared = 0;
 foreach ($coursesizes as $courseid => $size) {
     if (empty($courses[$courseid])) {
         continue;
     }
     $backupsize = $coursebackupsizes[$courseid];
-    $backupsize = round(ceil($backupsize / 1048576));
-    $totalsize = $totalsize + round(ceil($size / 1048576));
+    $backupsize = ceil($backupsize / 1048576);
+    $totalsize = $totalsize + ceil($size / 1048576);
     $totalbackupsize  = $totalbackupsize + $backupsize;
     $course = $courses[$courseid];
     $coursecontext = context_course::instance($course->id);
     $contextcheck = $coursecontext->path . '%';
-    $sharedsize = $DB->get_field_sql($sizesql, array($contextcheck));
-    if (!empty($sharedsize)) {
-        $sharedsize = round(ceil($sharedsize / 1048576)) . $sizemb;
-    } else {
-        $sharedsize = "0".$sizemb;
-    }
-    $totalshared += (int)$sharedsize;
     $course->shortname = format_string($course->shortname, true, ['context' => $coursecontext]);
     $course->name = format_string($course->name, true, ['context' => $coursecontext]);
     $row = array();
+    $readablesize = ceil($size / 1048576) . $sizemb;
     $row[] = '<a href = "'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'">' . $course->shortname . '</a>';
     $row[] = '<a href = "'.$CFG->wwwroot.'/course/index.php?categoryid='.$course->category.'">' . $course->name . '</a>';
-    $readablesize = round(ceil($size / 1048576)) . $sizemb;
-    $recoverablesize = (int)round(ceil(($size / 1048576))) - (int)$sharedsize;
     $a = new stdClass;
     $a->bytes = $size;
     $a->shortname = $course->shortname;
@@ -266,14 +221,11 @@ foreach ($coursesizes as $courseid => $size) {
     $backupbytesused = get_string('coursebackupbytes', 'report_coursesize', $a);
     $summarylink = new moodle_url('/report/coursesize/course.php', array('id' => $course->id));
     $summary = html_writer::link($summarylink, ' '.get_string('coursesummary', 'report_coursesize'));
-    //$row[] = "<span id=\"sharedsize_".$course->shortname."\" title=\"$bytesused\">$sharedsize</span>";
-    //$row[] = "<span id=\"recoverablesize_".$course->shortname."\" title=\"$backupbytesused\">" . $recoverablesize. "$sizemb</span>";
     $row[] = "<span id=\"backupsize_".$course->shortname."\" title=\"$backupbytesused\">" . $backupsize. "$sizemb</span>";
     $row[] = "<span id=\"coursesize_".$course->shortname."\" title=\"$bytesused\">$readablesize</span>".$summary;
     $coursetable->data[] = $row;
     $downloaddata[] = array($course->shortname, $course->name,
-    str_replace(',', '', $sharedsize), str_replace(',', '', $recoverablesize),
-                    str_replace(',', '', round(ceil($backupsize / 1048576)) . "$sizemb"), str_replace(',', '', $readablesize));
+                    str_replace(',', '', ceil($backupsize / 1048576) . "$sizemb"), str_replace(',', '', $readablesize));
     unset($courses[$courseid]);
 }
 // Now add the courses that had no sitedata into the table.
@@ -299,12 +251,10 @@ $downloaddata[] = array();
 $row = array();
 $row[] = get_string('total');
 $row[] = '';
-//$row[] = $totalshared . $sizemb;
-//$row[] = '';
 $row[] = $totalbackupsize  . $sizemb;
 $row[] = $totalsize  . $sizemb;
 $coursetable->data[] = $row;
-$downloaddata[] = array(get_string('total'), '', str_replace(',', '', $totalshared) .$sizemb,
+$downloaddata[] = array(get_string('total'), '',
 '', str_replace(',', '', $totalbackupsize . $sizemb), str_replace(',', '', $totalsize) . $sizemb);
 unset($courses);
 if (!empty($usersizes)) {
@@ -319,7 +269,7 @@ if (!empty($usersizes)) {
         $user = $DB->get_record('user', array('id' => $userid));
         $row = array();
         $row[] = '<a href="'.$CFG->wwwroot.'/user/view.php?id='.$userid.'">' . fullname($user) . '</a>';
-        $row[] = round(ceil($size / 1048576)) . $sizemb;
+        $row[] = ceil($size / 1048576) . $sizemb;
         $usertable->data[] = $row;
         if ($usercount >= REPORT_COURSESIZE_NUMBEROFUSERS) {
             break;
@@ -327,8 +277,8 @@ if (!empty($usersizes)) {
     }
     unset($users);
 }
-$systemsizereadable = round(ceil($systemsize / 1048576)) . $sizemb;
-$systembackupreadable = round(ceil($systembackupsize / 1048576)) . $sizemb;
+$systemsizereadable = ceil($systemsize / 1048576) . $sizemb;
+$systembackupreadable = ceil($systembackupsize / 1048576) . $sizemb;
 
 // Add in Course Cat including dropdown to filter.
 $url = '';
@@ -350,7 +300,6 @@ if ($download == 1) {
     }
     $csvexport->download_file ();
 }
-
 // All the processing done, the rest is just output stuff.
 
 print $OUTPUT->header();
@@ -361,7 +310,7 @@ if (empty($coursecat)) {
     print get_string('catsystemuse', 'report_coursesize', $systemsizereadable) . "<br/>";
     print get_string('catsystembackupuse', 'report_coursesize', $systembackupreadable) . "<br/>";
     if (!empty($CFG->filessizelimit)) {
-        print get_string("sizepermitted", 'report_coursesize', round($CFG->filessizelimit)) . "<br/>\n";
+        print get_string("sizepermitted", 'report_coursesize', ceil($CFG->filessizelimit)) . "<br/>\n";
     }
 }
 $heading = get_string('coursesize', 'report_coursesize');

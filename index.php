@@ -225,7 +225,7 @@ foreach ($coursesizes as $courseid => $size) {
     $row[] = "<span id=\"coursesize_".$course->shortname."\" title=\"$bytesused\">$readablesize</span>".$summary;
     $coursetable->data[] = $row;
     $downloaddata[] = array($course->shortname, $course->name,
-                    str_replace(',', '', ceil($backupsize / 1048576) . "$sizemb"), str_replace(',', '', $readablesize));
+                    str_replace(',', '', $backupsize . "$sizemb"), str_replace(',', '', $readablesize));
     unset($courses[$courseid]);
 }
 // Now add the courses that had no sitedata into the table.
@@ -254,8 +254,8 @@ $row[] = '';
 $row[] = $totalbackupsize  . $sizemb;
 $row[] = $totalsize  . $sizemb;
 $coursetable->data[] = $row;
-$downloaddata[] = array(get_string('total'), '',
-'', str_replace(',', '', $totalbackupsize . $sizemb), str_replace(',', '', $totalsize) . $sizemb);
+$downloaddata[] = array(get_string('total'), '', str_replace(',', '', $totalbackupsize . $sizemb),
+                  str_replace(',', '', $totalsize) . $sizemb);
 unset($courses);
 if (!empty($usersizes)) {
     arsort($usersizes);

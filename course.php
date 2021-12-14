@@ -91,9 +91,9 @@ $backupsize = "SELECT filesize FROM (
              GROUP BY a.component
 ) as backup WHERE component ='backup' ";
 $coursebackupsize = $DB->get_record_sql($backupsize, array($contextcheck));
-if(!empty($coursebackupsize)){
+if (!empty($coursebackupsize)) {
     $backup = ceil($coursebackupsize->filesize / 1048576 );
-}else {
+} else {
     $backup = 0;
 }
 // Calculate filesize shared with other courses.
@@ -141,18 +141,18 @@ FROM
                 ) size ON cx.id = size.contextid
         ) as t
     ) as table2
-    WHERE table1.contenthash = table2.contenthash and table1.contextlevel=table2.contextlevel
+    WHERE table1.contenthash = table2.contenthash and table1.contextlevel = table2.contextlevel
           and table1.path <> table2.path
           and table1.path like '$contextcheck'
     group by table1.contenthash
 ) final";
 
 $size = $DB->get_field_sql($sizesql);
- if ($size == TRUE) {
+if ($size == true) {
     $size = ceil($size / 1048576);
 } else {
-   $size = 0;
-} 
+    $size = 0;
+}
 // All the processing done, the rest is just output stuff.
 print $OUTPUT->header();
 print $OUTPUT->heading(get_string('coursesize', 'report_coursesize'). " - ". format_string($course->fullname));
